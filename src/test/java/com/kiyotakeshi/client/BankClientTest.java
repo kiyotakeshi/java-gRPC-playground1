@@ -3,6 +3,7 @@ package com.kiyotakeshi.client;
 import com.kiyotakeshi.models.Balance;
 import com.kiyotakeshi.models.BalanceCheckRequest;
 import com.kiyotakeshi.models.BankServiceGrpc;
+import com.kiyotakeshi.models.WithdrawRequest;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.junit.jupiter.api.BeforeAll;
@@ -31,5 +32,14 @@ public class BankClientTest {
 
         Balance balance = this.blockingStub.getBalance(balanceCheckRequest);
         System.out.println("Received : " + balance.getAmount());
+    }
+
+    @Test
+    public void withdrawTest() {
+        // only success at first time
+        // second time only remains "30"
+        WithdrawRequest withdrawRequest = WithdrawRequest.newBuilder().setAccountNumber(8).setAmount(50).build();
+        this.blockingStub.withdraw(withdrawRequest)
+                .forEachRemaining(money -> System.out.println("received: " + money.getValue()));
     }
 }
