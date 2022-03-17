@@ -1,5 +1,6 @@
 package com.kiyotakeshi.client;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.kiyotakeshi.models.Balance;
 import com.kiyotakeshi.models.BalanceCheckRequest;
 import com.kiyotakeshi.models.BankServiceGrpc;
@@ -10,10 +11,14 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BankClientTest {
 
     private BankServiceGrpc.BankServiceBlockingStub blockingStub;
+    private BankServiceGrpc.BankServiceStub bankServiceStub;
 
     @BeforeAll
     public void setup() {
@@ -22,6 +27,7 @@ public class BankClientTest {
                 .build();
 
         this.blockingStub = BankServiceGrpc.newBlockingStub(managedChannel);
+        this.bankServiceStub = BankServiceGrpc.newStub(managedChannel);
     }
 
     @Test
@@ -38,8 +44,17 @@ public class BankClientTest {
     public void withdrawTest() {
         // only success at first time
         // second time only remains "30"
-        WithdrawRequest withdrawRequest = WithdrawRequest.newBuilder().setAccountNumber(8).setAmount(50).build();
+        var withdrawRequest = WithdrawRequest.newBuilder().setAccountNumber(8).setAmount(50).build();
         this.blockingStub.withdraw(withdrawRequest)
                 .forEachRemaining(money -> System.out.println("received: " + money.getValue()));
+    }
+
+    @Test
+    void withdrawAsyncTest() throws InterruptedException {
+        var latch = new CountDownLatch(1);
+        var withdrawRequest = WithdrawRequest.newBuilder().setAccountNumber(6).setAmount(20).build();
+        this.bankServiceStub.withdraw(withdrawRequest, new MoneyStreamingResponse(latch));
+        latch.await();
+        // Thread.sleep(3000);
     }
 }
