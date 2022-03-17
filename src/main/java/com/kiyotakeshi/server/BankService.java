@@ -16,6 +16,10 @@ public class BankService extends BankServiceGrpc.BankServiceImplBase {
                 .build();
 
         responseObserver.onNext(balance);
+        // unary expects only one response
+        // WARNING: Cancelling the stream with status Status{code=INTERNAL, description=Too many responses, cause=null}
+        // io.grpc.StatusRuntimeException: CANCELLED: RST_STREAM closed stream. HTTP/2 error code: CANCEL
+        // responseObserver.onNext(balance);
         responseObserver.onCompleted();
     }
 
